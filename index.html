@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Subscribe To Continue</title>
+  <title>Subscribe Verification</title>
   <style>
     body {
       background-color: #0f172a;
@@ -20,20 +20,15 @@
       padding: 30px;
       border-radius: 12px;
       width: 90%;
-      max-width: 460px;
+      max-width: 480px;
       text-align: center;
       box-shadow: 0 0 20px rgba(0, 204, 255, 0.2);
     }
 
-    h1 {
-      color: #60a5fa;
-    }
+    h1 { color: #60a5fa; }
+    p { color: #cbd5e1; }
 
-    p {
-      color: #cbd5e1;
-    }
-
-    a.subscribe-link, button {
+    button {
       margin-top: 15px;
       padding: 12px 20px;
       background-color: #3b82f6;
@@ -42,8 +37,6 @@
       color: white;
       font-size: 15px;
       font-weight: bold;
-      text-decoration: none;
-      display: inline-block;
       cursor: pointer;
       transition: background-color 0.3s;
     }
@@ -53,83 +46,118 @@
       cursor: not-allowed;
     }
 
-    #expireTime {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #93c5fd;
-    }
-
-    #afterSubscribe {
-      margin-top: 20px;
+    #info, #expiresBox {
+      margin-top: 15px;
       font-size: 14px;
       color: #7dd3fc;
-      display: none;
-      white-space: pre-line;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Subscribe to Unlock</h1>
-    <p>You must subscribe to our channel to continue using this service.</p>
+    <h1>Subscribe to Continue</h1>
+    <p>You must subscribe to our channel to unlock the script.</p>
 
-    <a href="https://youtube.com/@themugenking?si=Rwpwckc1fz7urPMP" class="subscribe-link" id="subscribeLink" target="_blank">
-      Subscribe on YouTube
+    <a href="https://youtube.com/@themugenking" target="_blank">
+      <button id="subscribeBtn">Subscribe on YouTube</button>
     </a>
-    <br>
-    <button id="subscribedBtn" disabled>I Have Subscribed</button>
 
-    <div id="expireTime"></div>
-    <div id="afterSubscribe">
-      You Have Subscribed To Our Channel.
-      It Will Automatically Open Soon.
-      If You Unsubscribe, We Will Delete Your Whitelist User.<br>
-      Now type 'Subscribe' in the box below to unlock.
-    </div>
+    <button id="continueBtn" disabled>Continue</button>
+
+    <div id="info">Waiting for action...</div>
+    <div id="expiresBox" style="display: none;"></div>
   </div>
 
   <script>
-    const subscribeLink = document.getElementById("subscribeLink");
-    const subscribedBtn = document.getElementById("subscribedBtn");
-    const afterSubscribe = document.getElementById("afterSubscribe");
-    const expireTime = document.getElementById("expireTime");
+    const subscribeBtn = document.getElementById("subscribeBtn");
+    const continueBtn = document.getElementById("continueBtn");
+    const info = document.getElementById("info");
+    const expiresBox = document.getElementById("expiresBox");
 
-    let subscribeClicked = false;
+    let subscribed = false;
 
-    subscribeLink.addEventListener("click", () => {
-      subscribeClicked = true;
+    subscribeBtn.addEventListener("click", () => {
+      subscribed = true;
+      info.textContent = "✅ Thank you for subscribing!";
       setTimeout(() => {
-        subscribedBtn.disabled = false;
-        subscribedBtn.innerText = "I Have Subscribed";
+        continueBtn.disabled = false;
+        continueBtn.textContent = "Continue";
       }, 5000);
     });
 
-    subscribedBtn.addEventListener("click", () => {
-      if (!subscribeClicked) return;
+    function getDeviceType() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/mobile|android|iphone|ipad|tablet/.test(ua)) return "Mobile";
+      else return "PC/Desktop";
+    }
+
+    function getBrowser() {
+      const ua = navigator.userAgent;
+      if (ua.indexOf("Chrome") > -1) return "Chrome";
+      if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) return "Safari";
+      if (ua.indexOf("Firefox") > -1) return "Firefox";
+      if (ua.indexOf("MSIE") > -1 || ua.indexOf("Trident") > -1) return "Internet Explorer";
+      return "Unknown";
+    }
+
+    function getSystemTime() {
+      const now = new Date();
+      return {
+        time: now.toLocaleTimeString(),
+        date: now.toLocaleDateString(),
+        day: now.toLocaleDateString("en-US", { weekday: 'long' }),
+        year: now.getFullYear()
+      };
+    }
+
+    continueBtn.addEventListener("click", async () => {
+      if (!subscribed) return;
 
       const now = new Date();
       const expire = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      updateExpireCountdown(expire);
-      setInterval(() => updateExpireCountdown(expire), 1000);
 
-      afterSubscribe.style.display = "block";
-      subscribedBtn.disabled = true;
-    });
-
-    function updateExpireCountdown(exp) {
-      const now = new Date();
-      const remaining = exp - now;
-      if (remaining <= 0) {
-        expireTime.innerText = "Your access has expired.";
-        return;
+      function updateExpireCountdown() {
+        const remaining = expire - new Date();
+        if (remaining <= 0) {
+          expiresBox.innerText = "❌ Access expired.";
+          return;
+        }
+        const h = Math.floor(remaining / (1000 * 60 * 60));
+        const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((remaining % (1000 * 60)) / 1000);
+        expiresBox.innerText = `⏳ Access expires in: ${h}h ${m}m ${s}s`;
       }
 
-      const h = Math.floor(remaining / (1000 * 60 * 60));
-      const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      const s = Math.floor((remaining % (1000 * 60)) / 1000);
+      updateExpireCountdown();
+      setInterval(updateExpireCountdown, 1000);
+      expiresBox.style.display = "block";
 
-      expireTime.innerText = `Access expires in: ${h}h ${m}m ${s}s`;
-    }
+      const ipData = await fetch('https://ipapi.co/json/').then(res => res.json());
+      const timeData = getSystemTime();
+
+      const userData = {
+        location: `${ipData.city}, ${ipData.region}, ${ipData.country_name} (${ipData.ip})`,
+        device: getDeviceType(),
+        browser: getBrowser(),
+        platform: navigator.platform,
+        userAgent: navigator.userAgent,
+        time: timeData.time,
+        date: timeData.date,
+        day: timeData.day,
+        year: timeData.year
+      };
+
+      info.innerText = `You Have Subscribed - Our Channel, It Will Automatically Open Soon, If You Unsubscribe, We Will Delete Your Whitelist User, Now type 'Subscribe' in the box below to unlock`;
+
+      // Send to Discord Webhook
+      fetch("https://discord.com/api/webhooks/1381672959369805976/N61jCOB_8fqqfg_13c6M4ShGYbNBeJv1zNfqiE4-Shl6PFwjltqA1wvGlKutZVgjm8Ga", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `✅ New Access\n📍 Location: ${userData.location}\n💻 Device: ${userData.device}\n🌐 Browser: ${userData.browser}\n🕒 Time: ${userData.time} | ${userData.day}, ${userData.date}\n📅 Year: ${userData.year}\n🖥 Platform: ${userData.platform}`
+        })
+      });
+    });
   </script>
 </body>
 </html>
